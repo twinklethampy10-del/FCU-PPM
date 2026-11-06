@@ -33,6 +33,9 @@ button.sm{min-height:36px;padding:6px 12px;font-size:14px}
 .q>*+*{margin-top:6px}
 .ql{font-size:14px;font-weight:600}
 .cap{font-size:11px;color:var(--mut)}
+.act{font-size:13px;color:var(--mut);white-space:pre-line}
+.act summary{all:unset;cursor:pointer;color:var(--ac);font-weight:600;font-size:13px}
+.act div{margin-top:6px}
 .req{display:none;color:var(--bad);font-size:12px;font-weight:700}
 .seg{display:flex;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
 .seg button{flex:1;border-radius:0;background:var(--card);color:var(--mut);padding:6px 2px;min-height:42px;font-size:13px;border-right:1px solid var(--bd)}
@@ -82,6 +85,42 @@ const SITE='1 Principal Place',CLIENT='Amazon- LHR16';
 const SETS={OSF:[['Operational','g'],['Standby','a'],['Faulty','r']],SC:[['A','g'],['B','g'],['C','r'],['D','r'],['X','r']],FA:[['New','g'],['Cleaned','g'],['Checked','g'],['No Access','a']],CHK:[['Checked','g'],['No Access','a'],['Defect','r']],CHKN:[['Checked','g'],['None N/A','n'],['Defect','r']]};
 const SCL={A:'A - As New',B:'B - Fair',C:'C - Poor',D:'D - Failed',X:'X - Unrepairable'};
 const FIELDS=[['op','Unit operational','s','OSF'],['fan','Fan(s)','s','OSF'],['fs','Air filter: pre-maintenance condition','s','SC'],['fa','Air filter: action','s','FA'],['coil','Coil','s','CHK'],['cd','Condense tray / drain','s','CHK'],['dw','Ductwork, grilles & diffusers','s','CHK'],['pc','Pipework condition (incl. lagging)','s','SC'],['sr','Strainers','s','CHKN'],['hv','Heating valve & actuator','s','CHKN'],['ho','Heating temps °C (full heating)','t'],['cv','Cooling valve & actuator','s','CHKN'],['co','Cooling temps °C (full cooling)','t'],['sp','Default set-point °C','n']];
+const ACT={
+op:`Status: Switch off and isolate. Visually inspect unit for damage, corrosion and firmness of fixings.
+
+Test unit: Restore power supply and run unit. Check airflow is normal at correct speed setting. Check unit operates without undue noise or vibration. Check operation of controller.
+
+Casing: Clean.
+
+Electrical: Check operation of damper motors, ensure free operation.`,
+fan:`General: Check the fan runners for security on shafts and clean with a soft brush and vacuum cleaner. Check operation of fan motor and motor shaft for 'lift' etc. Clean interior of unit.`,
+fs:`Permanent filters: Clean and refit, ensuring proper location. The period between cleaning is dependent on operating conditions; in a very dirty atmosphere the filter will require more frequent cleaning.
+
+Disposable type filters: Check filters, withdraw and clean (or replace if necessary) filter media from dirty side with vacuum cleaner.`,
+coil:`Cooling/heating battery: Clean cooling/heating battery/element by applying an air jet to the air leaving face.`,
+cd:`Condensate drain connection and pump: Check connection is clear. Ensure condensate lift pump is operational and able to discharge condensate to the drainage pipework.`,
+dw:`Ductwork flexible couplings (if fitted): Check condition. Repair/refix any ductwork to the spigots as necessary.
+
+Grilles and diffusers: Clean using vacuum or alternatively, remove and clean.`,
+pc:`Cooling/heating battery: Inspect all pipework, valves, stopcocks, air vents, drain valves, check valves, safety valves and pressure reducing valves for leaks, defects or malfunctions. Rectify if possible, or note for early attention.`,
+sr:`Strainers: Inspect and clean strainers as necessary. Replace damaged strainer elements and worn seals.`,
+hv:`Chilled water/LPHW control valves: Check functioning. Check all flexible hoses if fitted are in good condition.`,
+sp:`Thermostats: Check operation by moving set point. Restore to original setting.
+
+Electrical: Check operation of thermostats.`};
+ACT.fa=ACT.fs;ACT.cv=ACT.hv;
+const ELEC=`1. Formal visual inspection of electrical equipment
+Before starting, obtain a copy of the previous findings, if available, so any deterioration can be assessed. Record the inspection and check:
+- Equipment is installed and operating per the manufacturer's instructions: correct voltage, frequency, operating current, electrical protection (fuse, breaker, RCD, etc.), secure terminations.
+- Suitability for the environment: mechanical/heat damage, weather, high/low temperatures, water, pressure, dirty or corrosive conditions, flammable/explosive substances.
+- Switching and isolation: normal functional use, maintenance (lockable), emergency disconnection.
+- Where possible, consult the user about any faults and correct operation.
+- User checks: casing/housing (cracks, warping, discoloration, scorching, burns); flex/cable (damage, splits, twisting, tape repairs); accessories, extensions and adapters; a valid label is attached; RCD test button; plugs, sockets and fused connection units (heat damage, loose or bent screws/pins, broken casings); open plugs and couplers (unless non-rewireable) and inspect the connections and fuse ratings.
+- Damaged or faulty equipment must be removed from use, reported and labelled, and the duty holder informed.
+
+2. Combined inspection and testing of electrical equipment
+Obtain previous findings first. Record and carry out: a preliminary visual inspection; suitable means of isolation; disconnect ancillary equipment (control/comms) where necessary; the user checks and environment suitability above. Then the in-service tests, in this order: protective conductor continuity test (Class I equipment); insulation resistance test; protective conductor/touch current test (where required); RCD operating time test (where required); functional check of the equipment. Damaged or faulty equipment must be removed from use, reported and labelled, and the duty holder informed.`;
+const actEl=(t,title)=>h('details',{class:'act'},h('summary',{},title||'Action'),h('div',{},t));
 const col=(set,v)=>{const e=SETS[set]&&SETS[set].find(a=>a[0]===v);return e?e[1]:'';};
 const newU=()=>({ref:'',v:{},c:'',p:[],pp:{}});
 let S={m:{eng:'',loc:'',date:today,staff:''},u:[newU()]};
@@ -115,10 +154,10 @@ function draw(){const L=$('#list');L.innerHTML='';
    else if(t==='t'){const a=u.v[k]=u.v[k]||['',''];el=h('div',{class:'g2'},inp(a,0,'text','Air On'),inp(a,1,'text','Air Off'));}
    else el=inp(u.v,k,'text','°C');
    let pb='',note;if(t==='s'){const pa=u.pp[k]=u.pp[k]||[];note=h('div',{class:'req'},'Picture required');pb=[photoBox(pa,()=>{sync();change();}),note];}
-   const q=h('div',{class:'q'},h('div',{class:'ql'},lb),el,cap,pb);qs.push([q,k,set,note]);g.append(q);});
+   const q=h('div',{class:'q'},h('div',{class:'ql'},lb),ACT[k]?actEl(ACT[k]):'',el,cap,pb);qs.push([q,k,set,note]);g.append(q);});
   const cm=h('textarea',{placeholder:'Comments: access, issues, defect detail or follow-up actions',oninput:e=>{u.c=e.target.value;change();}});cm.value=u.c;
   card.append(h('div',{class:'fh'},h('h2',{},'Unit '+(i+1)),S.u.length>1?h('button',{class:'s sm',onclick:()=>{S.u.splice(i,1);draw();change();}},'Remove'):''),
-   fld('Unit Ref',inp(u,'ref')),g,h('div',{style:'margin-top:10px'},cm));
+   fld('Unit Ref',inp(u,'ref')),g,h('div',{style:'margin-top:10px'},actEl(ELEC,'Electrical inspection and testing (reference)')),h('div',{style:'margin-top:10px'},cm));
   sync();L.append(card);});
  renderSum();}
 function renderSum(){const b=$('#sumb');b.innerHTML='';let bad=0;
