@@ -122,9 +122,9 @@ Before starting, obtain a copy of the previous findings, if available, so any de
 Obtain previous findings first. Record and carry out: a preliminary visual inspection; suitable means of isolation; disconnect ancillary equipment (control/comms) where necessary; the user checks and environment suitability above. Then the in-service tests, in this order: protective conductor continuity test (Class I equipment); insulation resistance test; protective conductor/touch current test (where required); RCD operating time test (where required); functional check of the equipment. Damaged or faulty equipment must be removed from use, reported and labelled, and the duty holder informed.`;
 const actEl=(t,title)=>h('details',{class:'act'},h('summary',{},title||'Action'),h('div',{},t));
 const col=(set,v)=>{const e=SETS[set]&&SETS[set].find(a=>a[0]===v);return e?e[1]:'';};
-const newU=()=>({ref:'',v:{},c:'',p:[],pp:{}});
+const newU=()=>({ref:'',v:{},c:'',p:[],pp:{},fc:{}});
 let S={m:{eng:'',loc:'',date:today,staff:''},u:[newU()]};
-try{const s=JSON.parse(localStorage.getItem('fcum26'));if(s&&s.u){S=s;S.u.forEach(u=>{u.p=[];u.pp={};});}}catch(e){}
+try{const s=JSON.parse(localStorage.getItem('fcum26'));if(s&&s.u){S=s;S.u.forEach(u=>{u.p=[];u.pp={};u.fc=u.fc||{};});}}catch(e){}
 let tm;const change=()=>{renderSum();clearTimeout(tm);tm=setTimeout(()=>{try{const c=JSON.parse(JSON.stringify(S));c.u.forEach(u=>{u.p=[];u.pp={};});localStorage.setItem('fcum26',JSON.stringify(c));}catch(e){}},500);};
 const inp=(o,k,t,ph)=>{const i=h('input',{type:t||'text',placeholder:ph||'',oninput:e=>{o[k]=e.target.value;change();}});i.value=o[k]||'';return i;};
 const fld=(l,el)=>h('div',{},h('label',{},l),el);
@@ -143,18 +143,19 @@ const photoBox=(arr,cb)=>{const ph=h('div',{class:'ph'});
  draw();return h('div',{},h('div',{class:'row'},h('button',{class:'s sm',onclick:()=>f1.click()},'Take picture'),h('button',{class:'s sm',onclick:()=>f2.click()},'Choose pictures')),f1,f2,ph);};
 
 const missing=u=>FIELDS.filter(f=>f[2]==='s'&&col(f[3],u.v[f[0]])==='r'&&!(u.pp[f[0]]||[]).length).map(f=>f[1]);
+const fcomments=u=>FIELDS.filter(f=>f[2]==='s'&&col(f[3],u.v[f[0]])==='r'&&(u.fc[f[0]]||'').trim()).map(f=>f[1].replace(/ \(.*\)/,'')+': '+u.fc[f[0]].trim());
 const cnt=u=>Object.values(u.pp).reduce((a,b)=>a+b.length,0);
 const flagsOf=u=>FIELDS.filter(f=>f[2]==='s'&&col(f[3],u.v[f[0]])==='r').map(f=>f[1].replace(/ \(.*\)/,'')+': '+(f[3]==='SC'?SCL[u.v[f[0]]]:u.v[f[0]]));
 function draw(){const L=$('#list');L.innerHTML='';
  S.u.forEach((u,i)=>{
   const card=h('div',{class:'card'}),g=h('div',{class:'qg'}),qs=[];
-  const sync=()=>{card.classList.toggle('bad',flagsOf(u).length>0);qs.forEach(([q,k,set,note])=>{const r=col(set,u.v[k])==='r';q.classList.toggle('bad',r);if(note)note.style.display=r&&!(u.pp[k]||[]).length?'block':'none';});};
+  const sync=()=>{card.classList.toggle('bad',flagsOf(u).length>0);qs.forEach(([q,k,set,note,ct])=>{const r=col(set,u.v[k])==='r';q.classList.toggle('bad',r);if(ct)ct.style.display=r?'block':'none';if(note)note.style.display=r&&!(u.pp[k]||[]).length?'block':'none';});};
   FIELDS.forEach(([k,lb,t,set])=>{let el,cap='';
    if(t==='s'){el=h('div',{class:'seg'});SETS[set].forEach(([l,c])=>{const b=h('button',{type:'button',class:u.v[k]===l?'on '+c:'',onclick:()=>{[...el.children].forEach(x=>x.className='');b.className='on '+c;u.v[k]=l;sync();change();}},l);el.append(b);});if(set==='SC')cap=h('div',{class:'cap'},'A As New, B Fair, C Poor, D Failed, X Unrepairable');}
    else if(t==='t'){const a=u.v[k]=u.v[k]||['',''];el=h('div',{class:'g2'},inp(a,0,'text','Air On'),inp(a,1,'text','Air Off'));}
    else el=inp(u.v,k,'text','°C');
-   let pb='',note;if(t==='s'){const pa=u.pp[k]=u.pp[k]||[];note=h('div',{class:'req'},'Picture required');pb=[photoBox(pa,()=>{sync();change();}),note];}
-   const q=h('div',{class:'q'},h('div',{class:'ql'},lb),ACT[k]?actEl(ACT[k]):'',el,cap,pb);qs.push([q,k,set,note]);g.append(q);});
+   let pb='',note,ct;if(t==='s'){const pa=u.pp[k]=u.pp[k]||[];note=h('div',{class:'req'},'Picture required');ct=h('textarea',{placeholder:'Comments: describe the fault and action required',style:'display:none;min-height:60px',oninput:e=>{u.fc[k]=e.target.value;change();}});ct.value=u.fc[k]||'';pb=[ct,photoBox(pa,()=>{sync();change();}),note];}
+   const q=h('div',{class:'q'},h('div',{class:'ql'},lb),ACT[k]?actEl(ACT[k]):'',el,cap,pb);qs.push([q,k,set,note,ct]);g.append(q);});
   const cm=h('textarea',{placeholder:'Comments: access, issues, defect detail or follow-up actions',oninput:e=>{u.c=e.target.value;change();}});cm.value=u.c;
   card.append(h('div',{class:'fh'},h('h2',{},'Unit '+(i+1)),S.u.length>1?h('button',{class:'s sm',onclick:()=>{S.u.splice(i,1);draw();change();}},'Remove'):''),
    fld('Unit Ref',inp(u,'ref')),g,h('div',{style:'margin-top:10px'},actEl(ELEC,'Electrical inspection and testing (reference)')),h('div',{style:'margin-top:10px'},cm));
@@ -162,7 +163,7 @@ function draw(){const L=$('#list');L.innerHTML='';
  renderSum();}
 function renderSum(){const b=$('#sumb');b.innerHTML='';let bad=0;
  const done=S.u.filter(u=>u.ref&&u.v.op).length;
- S.u.forEach(u=>{const f=flagsOf(u);if(f.length){bad++;b.append(h('div',{class:'fi'},h('b',{},'Unit '+(u.ref||'(no ref)')),h('div',{},f.join(', ')),missing(u).length?h('div',{style:'color:var(--bad);font-weight:600;margin-top:4px'},'Picture required: '+missing(u).join(', ')):'',u.c?h('div',{style:'margin-top:4px'},u.c):''));}});
+ S.u.forEach(u=>{const f=flagsOf(u);if(f.length){bad++;b.append(h('div',{class:'fi'},h('b',{},'Unit '+(u.ref||'(no ref)')),h('div',{},f.join(', ')),fcomments(u).map(x=>h('div',{style:'margin-top:4px'},x)),missing(u).length?h('div',{style:'color:var(--bad);font-weight:600;margin-top:4px'},'Picture required: '+missing(u).join(', ')):'',u.c?h('div',{style:'margin-top:4px'},u.c):''));}});
  if(!bad)b.append(h('div',{class:'ok'},'No defects flagged.'));
  $('#nDone').textContent=done;$('#nBad').textContent=bad;}
 $('#add').onclick=()=>{S.u.push(newU());draw();change();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});};
@@ -189,9 +190,9 @@ function build(){
  H('Details');T(null,[['Site',SITE,'Client',CLIENT],['Floor',S.m.loc||'-','Date',S.m.date],['Works completed by',S.m.eng||'-','Additional staff',S.m.staff||'-']],{columnStyles:lc,styles:{fontSize:9,cellPadding:2,halign:'left'}});
  const bad=S.u.filter(u=>flagsOf(u).length),done=S.u.filter(u=>u.ref&&u.v.op).length;
  H('Summary');T(['Units completed','Units with defects'],[[String(done),String(bad.length)]],{headStyles:{fillColor:[200,30,30],textColor:255}});
- if(bad.length)T(['Unit ref','Defects','Comments'],bad.map(u=>[u.ref||'-',flagsOf(u).join(', '),u.c||'-']),{headStyles:{fillColor:[200,30,30],textColor:255},bodyStyles:{fillColor:[253,236,234],halign:'left'},columnStyles:{0:{cellWidth:30}}});
+ if(bad.length)T(['Unit ref','Defects','Comments'],bad.map(u=>[u.ref||'-',flagsOf(u).join(', '),fcomments(u).concat(u.c?[u.c]:[]).join('; ')||'-']),{headStyles:{fillColor:[200,30,30],textColor:255},bodyStyles:{fillColor:[253,236,234],halign:'left'},columnStyles:{0:{cellWidth:30}}});
  H('Unit checks');
- const rows=S.u.map(u=>{const ho=u.v.ho||[],co=u.v.co||[];return[u.ref||'-',cell(u,'op','OSF'),cell(u,'fan','OSF'),cell(u,'fs','SC'),cell(u,'fa','FA'),cell(u,'coil','CHK'),cell(u,'cd','CHK'),cell(u,'dw','CHK'),cell(u,'pc','SC'),cell(u,'sr','CHKN'),cell(u,'hv','CHKN'),ho[0]||'-',ho[1]||'-',cell(u,'cv','CHKN'),co[0]||'-',co[1]||'-',u.v.sp||'-',{content:(u.c||'-')+(cnt(u)?' ['+cnt(u)+' photo'+(cnt(u)>1?'s':'')+']':''),styles:{halign:'left'}}];});
+ const rows=S.u.map(u=>{const ho=u.v.ho||[],co=u.v.co||[];return[u.ref||'-',cell(u,'op','OSF'),cell(u,'fan','OSF'),cell(u,'fs','SC'),cell(u,'fa','FA'),cell(u,'coil','CHK'),cell(u,'cd','CHK'),cell(u,'dw','CHK'),cell(u,'pc','SC'),cell(u,'sr','CHKN'),cell(u,'hv','CHKN'),ho[0]||'-',ho[1]||'-',cell(u,'cv','CHKN'),co[0]||'-',co[1]||'-',u.v.sp||'-',{content:(fcomments(u).concat(u.c?[u.c]:[]).join('; ')||'-')+(cnt(u)?' ['+cnt(u)+' photo'+(cnt(u)>1?'s':'')+']':''),styles:{halign:'left'}}];});
  T(['Unit Ref','Unit operational','Fan(s)','Filter condition','Filter action','Coil','Condense tray/drain','Ductwork, grilles','Pipework condition','Strainers','Heating valve','Heat Air On','Heat Air Off','Cooling valve','Cool Air On','Cool Air Off','Set-point','Comments'],rows,{styles:{fontSize:7,cellPadding:1.2,overflow:'linebreak',textColor:20,halign:'center'},columnStyles:{17:{cellWidth:46}}});
  const ps=[];S.u.forEach(u=>FIELDS.forEach(f=>(u.pp[f[0]]||[]).forEach(p=>ps.push([(u.ref||'Unit')+' - '+f[1].replace(/ \(.*\)/,''),p]))));
  if(ps.length){doc.addPage();y=18;H('Pictures');y+=2;const cols=4,bw=(W-2*M-6*(cols-1))/cols,bh=52;
@@ -207,8 +208,9 @@ $('#pdf').onclick=async()=>{const msg=$('#msg');
  if(miss.length){msg.style.color='var(--bad)';msg.textContent='Picture required before PDF - '+miss.join('; ');return;}
  msg.style.color='';msg.textContent='Creating PDF...';
  try{const doc=build(),name='FCU-Maintenance-'+(S.m.loc?S.m.loc.replace(/[^\w-]+/g,'_')+'-':'')+S.m.date+'.pdf';
-  doc.save(name);msg.textContent='PDF created.';
- }catch(e){msg.textContent='Could not create PDF: '+(e.message||e);}};
+  const dl=window.claude&&await claude.use('downloads');
+  if(dl){await dl.save({filename:name,data:doc.output('arraybuffer')});msg.textContent='PDF ready.';}else{doc.save(name);msg.textContent='PDF created.';}
+ }catch(e){msg.textContent=e&&e.code==='declined'?'Download cancelled.':'Could not create PDF: '+(e.message||e);}};
 let armed=false;$('#rst').onclick=e=>{if(!armed){armed=true;e.target.textContent='Tap again to clear';setTimeout(()=>{armed=false;e.target.textContent='Reset to New';},4000);return;}
  try{localStorage.removeItem('fcum26');}catch(x){}location.reload();};
 </script>
