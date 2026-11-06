@@ -81,7 +81,7 @@ const LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAADQCAIAAAAoBCt6AA
 const $=s=>document.querySelector(s);
 const today=new Date().toISOString().slice(0,10);
 const h=(t,a={},...k)=>{const e=document.createElement(t);for(const x in a){if(x==='class')e.className=a[x];else if(x.startsWith('on'))e[x]=a[x];else e.setAttribute(x,a[x]);}k.flat().forEach(c=>e.append(c&&c.nodeType?c:document.createTextNode(c==null?'':c)));return e;};
-const SITE='1 Principal Place',CLIENT='Amazon- LHR16';
+const SITE='Twinkle',CLIENT='Amazon- LHR16';
 const SETS={OSF:[['Operational','g'],['Standby','a'],['Faulty','r']],SC:[['A','g'],['B','g'],['C','r'],['D','r'],['X','r']],FA:[['New','g'],['Cleaned','g'],['Checked','g'],['No Access','a']],CHK:[['Checked','g'],['No Access','a'],['Defect','r']],CHKN:[['Checked','g'],['None N/A','n'],['Defect','r']]};
 const SCL={A:'A - As New',B:'B - Fair',C:'C - Poor',D:'D - Failed',X:'X - Unrepairable'};
 const FIELDS=[['op','Unit operational','s','OSF'],['fan','Fan(s)','s','OSF'],['fs','Air filter: pre-maintenance condition','s','SC'],['fa','Air filter: action','s','FA'],['coil','Coil','s','CHK'],['cd','Condense tray / drain','s','CHK'],['dw','Ductwork, grilles & diffusers','s','CHK'],['pc','Pipework condition (incl. lagging)','s','SC'],['sr','Strainers','s','CHKN'],['hv','Heating valve & actuator','s','CHKN'],['ho','Heating temps °C (full heating)','t'],['cv','Cooling valve & actuator','s','CHKN'],['co','Cooling temps °C (full cooling)','t'],['sp','Default set-point °C','n']];
